@@ -1,0 +1,22 @@
+{
+  "name": "scrapper-albums",
+  "version": "1.0.0",
+  "description": "Scrapper to get data from \"https://www.rollingstone.com/music/music-lists/best-albums-of-all-time-1062063/\" to use in a future project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taojoue/scrapper-albums.git"
+  },
+  "author": "Tao Jouet",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/taojoue/scrapper-albums/issues"
+  },
+  "homepage": "https://github.com/taojoue/scrapper-albums#readme",
+  "dependencies": {
+    "selenium-webdriver": "^4.1.2"
+  }
+}
