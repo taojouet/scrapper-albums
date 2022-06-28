@@ -13,6 +13,7 @@
     }
 */
 const { Builder, By } = require('selenium-webdriver');
+const { exec } = require("child_process");
 
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose')
@@ -31,10 +32,10 @@ async function scrapper() {
 
 
 
-    mongoose.connect(process.env.MONGO_URL,
-        { useNewUrlParser: true, useUnifiedTopology: true }, err => {
-            console.log('connected')
-        });
+    // mongoose.connect(process.env.MONGO_URL,
+    //     { useNewUrlParser: true, useUnifiedTopology: true }, err => {
+    //         console.log('connected')
+    //     });
 
     // const schema = new mongoose.Schema({
     //     name: String
@@ -70,12 +71,23 @@ async function scrapper() {
             let t = await title[n].getText();
             let s = await subtitle[n].getText();
             let d = await description[n].getText();
+
+            let tURL = t.replace(/'/g, "").replace(/’/g, "").replace(/,/g, "").replace(/!/g, "").replace("+", "").replace(/é/g, "").replace(/ /g, "-");
+            tURL = tURL.replace("--", "x").replace("/", "-");
+            let url = "https://www.rollingstone.com/wp-content/uploads/2020/09/R1344-" + i + "-" + tURL + ".jpg"
+            // console.log(url);
             result.push({
-                    id: i,
-                    title: t,
-                    subtitle: s,
-                    // description: d,
-            });            
+                id: i,
+                title: t,
+                subtitle: s,
+                url: url,
+                // description: d,
+            });
+            try {
+                exec("curl " + url + " -o ./Images/" + i + ".jpg");
+            } catch (error) {
+                console.log(error);
+            }
         }
         for (let t of title) {
             // result.push({ title: await t.getText() });
@@ -110,7 +122,7 @@ async function scrapper() {
     finally {
         await driver.quit();
     }
-    console.log(result);
+    // console.log(result);
     return;
 }
 module.exports = scrapper();
