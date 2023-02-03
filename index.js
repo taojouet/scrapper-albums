@@ -16,7 +16,7 @@ const { Builder, By } = require('selenium-webdriver');
 const { exec } = require("child_process");
 
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const app = require('express');
 const fs = require('fs');
@@ -25,9 +25,10 @@ require('dotenv/config');
 
 const imgModel = require('./model.js');
 
+
+
 async function scrapper() {
     let result = [];
-    let driver = await new Builder().forBrowser('firefox').build();
 
     const urls = [
         "https://www.rollingstone.com/music/music-lists/best-albums-of-all-time-1062063/",
@@ -43,10 +44,13 @@ async function scrapper() {
     ];
 
 
-    // mongoose.connect(process.env.MONGO_URL,
-    //     { useNewUrlParser: true, useUnifiedTopology: true }, err => {
-    //         console.log('connected')
-    //     });
+    mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true }, err => {
+        try {
+            console.log('connected')
+        } catch (err) {
+            console.log(err)
+        }
+    });
 
     // const schema = new mongoose.Schema({
     //     name: String
@@ -60,79 +64,87 @@ async function scrapper() {
     // // Explicitly create the collection before using it
     // // so the collection is capped.
     // await Model.createCollection();
-    for (let n = 0; n < urls.length; n++) {
+    for (let urlNb = 0; urlNb < urls.length; urlNb++) {
+
+        let driver = await new Builder().forBrowser('firefox').build();
+
         try {
             // Navigate to Url
-            console.log(n)
-            await driver.get(urls[n]);
+            // console.log(urlNb)
+            await driver.get(urls[urlNb]);
 
             let id = await driver.findElements(By.className('c-gallery-vertical-album__number'));
             const nbOfElements = id.length;
             let title = await driver.findElements(By.className('c-gallery-vertical-album__title'));
             let subtitle = await driver.findElements(By.className('c-gallery-vertical-album__subtitle'));
             let description = await driver.findElements(By.className('c-gallery-vertical-album__description'));
-            let image = await driver.findElements(By.className('c-gallery-vertical-album__image u-gallery-react-placeholder-shimmer'));
-            // let image = await driver.findElements(By.className('c-gallery-vertical-album__image'));
-
-            // curl https://www.rollingstone.com/wp-content/uploads/2020/09/R1344-500-Arcade-Fire-Funeral.jpg?w=800 -o ./Images/test.png
-            // console.log(id);
-            // for (let i of id) {
-            // result.push({ id: await i.getText() });
+            
             for (let n = 0; n < nbOfElements; n++) {
                 let i = await id[n].getText();
                 let t = await title[n].getText();
                 let s = await subtitle[n].getText();
                 let d = await description[n].getText();
-
-                let tURL = t.replace(/'/g, "").replace(/’/g, "").replace(/,/g, "").replace(/!/g, "").replace("+", "").replace(/é/g, "e").replace(/ /g, "-");
-                tURL = tURL.replace("--", "x").replace("/", "-");
-                let url = "https://www.rollingstone.com/wp-content/uploads/2020/09/R1344-" + i + "-" + tURL + ".jpg"
+                let date = s.split(" ")[1];
+                // /'!éè-’i\+\b/g
+                let tURL = t.replace(/['‘’,!é&#]/g, "").replace("+", "").replace(/ /g, "-").replace("--", "x").replace("/", "-");
+                tURL = tURL;
+                // console.log(t);
+                let url = "https://www.rollingstone.com/wp-content/uploads/2020/09/R1344-0" + i + "-" + tURL + ".jpg"
                 // console.log(url);
+
                 result.push({
                     id: i,
                     title: t,
                     subtitle: s,
+                    description: d,
+                    date: date,
                     url: url,
-                    // description: d,
                 });
+
+
+                /*
+                ////////////// Scrapping images done, saved in 'Images' folder/////////////////////
                 try {
-                    exec("curl " + url + " -o ./Images/"  + i + ".jpg");
-                } catch (error) {
-                    console.log(error);
+                    exec("curl " + url + " -o ./Images/" + urlNb + "/" + i + ".jpg");
+                    // console.log(url);
+
+                } catch (err) {
+                    console.log(err);
                 }
+                */
             }
-            for (let t of title) {
-                // result.push({ title: await t.getText() });
+            // for (let t of title) {
+            // result.push({ title: await t.getText() });
 
-                // console.log(await im.getAttribute("src"));
-                // app.post('/', upload.single('image'), (req, res, next) => {
+            // console.log(await im.getAttribute("src"));
+            // app.post('/', upload.single('image'), (req, res, next) => {
 
-                // let obj = {
-                //     id: id,
-                //     title: title,
-                //     subtitle: subtitle,
-                //     description: description,
-                //     // img: {
-                //     //     data: fs.readFileSync(path.join(image)),
-                //     //     contentType: 'image/png'
-                //     // }
-                // }
+            // let obj = {
+            //     id: id,
+            //     title: title,
+            //     subtitle: subtitle,
+            //     description: description,
+            //     // img: {
+            //     //     data: fs.readFileSync(path.join(image)),
+            //     //     contentType: 'image/png'
+            //     // }
+            // }
 
-                // imgModel.create(obj, (err, item) => {
-                //     if (err) {
-                //         console.log(err);
-                //     }
-                //     else {
-                //         // item.save();
-                //         res.redirect('/');
-                //     }
-                // });
-                // });
-            }
+            // imgModel.create(obj, (err, item) => {
+            //     if (err) {
+            //         console.log(err);
+            //     }
+            //     else {
+            //         // item.save();
+            //         res.redirect('/');
+            //     }
+            // });
+            // });
+            // }
 
         }
         finally {
-            await driver.quit();
+            driver.quit();
         }
         // console.log(result);
         // });
